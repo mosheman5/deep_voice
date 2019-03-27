@@ -1,0 +1,192 @@
+function sCPanel = createCPanel
+%**************************************************************************
+%Description
+%
+%   constructive fuction for using the DSP control panel
+%   must run before any other function operating the data
+%   initializes all data fields to deafult values
+%
+%Input:
+%
+%Output:
+%
+%   hadle to sCPanel structure, it is also dumped to predifined directory after each run
+%
+%Last modiffied by Gilad at 5.7.2005
+%**************************************************************************
+
+
+%*************************VAR**********************************************
+%NOTE: Most! (but not all) [] fields are updated via some auto functions
+%NOTE: All dir paths must contain "slash" at end, example:'..\data\fwd\'
+%NOTE: All time variables are at internal matlab time format, if not stated else.
+%      There are two posible time formats:
+%      if a single value is passes it should be a string: 'dd-mmm-yyyy HH:MM:SS'     -> MATLAB 0 format
+%      if a muliple values are passed they should be a column vector DAY.PART_OF_DAY -> MATLAB 
+%**************************************************************************
+
+%**************************************************************************
+%Name
+sCPanel.standardStructureName= 'sCPanel';
+
+%After each run the whole sCPanel is dumped to a predefined dir
+sCPanel.sSettings.DumpDirectory = 'c:\temp\';
+%After each run the whole sCPanel is dumped to a predefined file
+sCPanel.sSettings.DumpFileName = 'sCPanel_dump.mat';
+%**************************************************************************
+
+
+%**************************************************************************
+%handle of function used to OVERRIDE the [] values
+%this function is used to read the audio data and must be written for each experiment!
+sCPanel.sSignal.BracketOverRide_handle = [];
+sCPanel.sSignal.DataPathName = [];
+sCPanel.sSignal.FileName = [];
+sCPanel.sSignal.NumOfChannels = [];
+sCPanel.sSignal.ChannelNumber = [];
+sCPanel.sSignal.SampleRate = [];
+sCPanel.sSignal.micPlace = [];
+sCPanel.sSignal.FileStartTime = []; 
+sCPanel.sSignal.WindowStartTime = [];   %time in MATLAB format
+sCPanel.sSignal.WindowEndTime = [];     %time in MATLBAB format
+sCPanel.sSignal.Signal_vec = [];                            %output of LoadSignal function
+sCPanel.sSignal.nextFileStartTime = [];
+sCPanel.sSignal.channelGain = [];
+sCPanel.sSignal.channelCaliboartion = [];
+sCPanel.sSignal.micUTMNorth = [];
+sCPanel.sSignal.micUTMEast = [];
+sCPanel.sSignal.micUTMZone = [];
+sCPanel.sSignal.micHeight = [];
+sCPanel.sSignal.standardStructureName = 'sSignal';          %mini structure name
+%**************************************************************************
+
+
+%**************************************************************************
+%handle of function used to OVERRIDE the [] values
+%this function is used to read the telemetry data and must be written for each experiment!
+sCPanel.sTelemetry.BracketOverRide_handle = [];
+sCPanel.sTelemetry.FileName = [];
+sCPanel.sTelemetry.DirPath = [];
+sCPanel.sTelemetry.VehicleName = 'heron_032';
+sCPanel.sTelemetry.VehicleType = [];                % a name is specific and type isn't
+sCPanel.sTelemetry.WindowStartTime = [];
+sCPanel.sTelemetry.WindowEndTime = [];
+sCPanel.sTelemetry.TeleFields = [];
+% % as a result of the time delay between the moments of leaving and arriving of sound,
+% % the telemetry data can be loaded 30 seconds beforehand and one sec afterwards (for safety)
+% % this is an OPTION only
+% sCPanel.sTelemetry.retartedTimeShift = [];
+% sCPanel.sTelemetry.forwardTimeShift = [];
+sCPanel.sTelemetry.standardStructureName = 'sTelemetry';
+%**************************************************************************
+
+
+%**************************************************************************
+sCPanel.sFFT.Signal_vec = [];
+sCPanel.sFFT.fftResolution = [];
+sCPanel.sFFT.SampleRate = [];
+sCPanel.sFFT.channelCaliboartion = [];
+sCPanel.sFFT.signalFFT_vec = [];
+sCPanel.sFFT.freq_vec = [];
+sCPanel.sFFT.standardStructureName='sFFT';
+%**************************************************************************
+
+
+%**************************************************************************
+sCPanel.sMap.Signal_vec = [];                   %AUTO OVERRIDED by FindAndSumAllHarmonics function
+sCPanel.sMap.SampleRate = [];                   %AUTO OVERRIDED by FindAndSumAllHarmonics function
+sCPanel.sMap.FileStartTime = [];                %AUTO OVERRIDED by FindAndSumAllHarmonics function
+sCPanel.sMap.WindowStartTime = [];              %AUTO OVERRIDED by FindAndSumAllHarmonics function
+sCPanel.sMap.WindowEndTime = [];                %AUTO OVERRIDED by FindAndSumAllHarmonics function
+sCPanel.sMap.fftResolution = [];                %AUTO OVERRIDED by FindAndSumAllHarmonics function
+sCPanel.sMap.nOverlap = [];
+sCPanel.sMap.windowType = [];
+sCPanel.sMap.SigSegLength = [];                  %Time length of signal slice
+sCPanel.sMap.sigSegOverLap = [];                 %
+sCPanel.sMap.Map_mat = [];                      %output of CreateMap function
+sCPanel.sMap.time_vec = [];                     %Time index of each slice
+sCPanel.sMap.freq_vec = [];                     %vector of map frequncies
+sCPanel.sMap.standardStructureName='sMap';
+sCPanel.sMap.map_angle_mat = [];
+%**************************************************************************
+
+
+%**************************************************************************
+sCPanel.sFundFreq.WindowStartTime =  [];
+sCPanel.sFundFreq.WindowEndTime = [];
+sCPanel.sFundFreq.Map_mat= [];
+sCPanel.sFundFreq.freq_vec= [];
+sCPanel.sFundFreq.time_vec= [];
+sCPanel.sFundFreq.tele_time= [];
+sCPanel.sFundFreq.tele_rpm= [];
+sCPanel.sFundFreq.VehicleType= [];
+sCPanel.sFundFreq.fundFreqVal= [];
+sCPanel.sFundFreq.linesCor= [];
+sCPanel.sFundFreq.maximumFrequencyIndex= [];
+sCPanel.sFundFreq.standardStructureName='sFundFreq';
+%**************************************************************************
+
+
+%**************************************************************************
+sCPanel.sGetMapHarmonics.getMethod = [];
+sCPanel.sGetMapHarmonics.MAP_mat = [];
+sCPanel.sGetMapHarmonics.time_vec = [];
+sCPanel.sGetMapHarmonics.freq_vec = [];
+sCPanel.sGetMapHarmonics.Harmonic_num = [];
+sCPanel.sGetMapHarmonics.Harmonic_vec = [];
+sCPanel.sGetMapHarmonics.SearchWidth = [];
+sCPanel.sGetMapHarmonics.sumWidth = [];
+sCPanel.sGetMapHarmonics.initialFreqGuess = [];
+sCPanel.sGetMapHarmonics.uniqueTag = [];
+sCPanel.sGetMapHarmonics.f0SavePath = [];
+sCPanel.sGetMapHarmonics.Harmonic_mat = [];
+sCPanel.sGetMapHarmonics.fundFreqVal = [];
+sCPanel.sGetMapHarmonics.standardStructureName = 'sGetMapHarmonics';
+%**************************************************************************
+
+
+%**************************************************************************
+sCPanel.sSumMapHarmonics.Map_mat = [];
+sCPanel.sSumMapHarmonics.freq_vec = [];
+sCPanel.sSumMapHarmonics.fundFreq_vec = [];
+sCPanel.sSumMapHarmonics.sumMethod = [];
+sCPanel.sSumMapHarmonics.sumWidth = [];
+sCPanel.sSumMapHarmonics.harmonic_vec = [];
+sCPanel.sSumMapHarmonics.sumHarmonic_mat = [];
+sCPanel.sSumMapHarmonics.standardStructureName = 'sSumMapHaromics';
+%**************************************************************************
+
+
+%**************************************************************************
+sCPanel.sSumFFTHarmonics.signalFFT_vec = [];
+sCPanel.sSumFFTHarmonics.freq_vec = [];
+sCPanel.sSumFFTHarmonics.fundFreq = [];
+sCPanel.sSumFFTHarmonics.sumMethod = 'searcher';
+sCPanel.sSumFFTHarmonics.sumWidth = [];
+sCPanel.sSumFFTHarmonics.optimizationRange = [];
+sCPanel.sSumFFTHarmonics.harmonic_vec = [];
+sCPanel.sSumFFTHarmonics.sumHarmonic_vec = [];
+sCPanel.sSumFFTHarmonics.standardStructureName = 'sSumFFTHarmonics';
+%**************************************************************************
+
+
+%**************************************************************************
+sCPanel.sCalcPlaneMicGeo.time_vec = [];
+sCPanel.sCalcPlaneMicGeo.tele_time = [];
+sCPanel.sCalcPlaneMicGeo.tele_utm_east = [];
+sCPanel.sCalcPlaneMicGeo.tele_utm_north = [];
+sCPanel.sCalcPlaneMicGeo.tele_altitude = [];
+sCPanel.sCalcPlaneMicGeo.tele_heading = [];
+sCPanel.sCalcPlaneMicGeo.tele_pitch = [];
+sCPanel.sCalcPlaneMicGeo.tele_roll = [];
+sCPanel.sCalcPlaneMicGeo.micUTMNorth = [];
+sCPanel.sCalcPlaneMicGeo.micUTMEast = [];
+sCPanel.sCalcPlaneMicGeo.micHeight = [];
+sCPanel.sCalcPlaneMicGeo.absRangePlane2Mic_vec = [];
+sCPanel.sCalcPlaneMicGeo.thetaPlane2Mic_vec = [];
+sCPanel.sCalcPlaneMicGeo.phiPlane2Mic_vec = [];
+sCPanel.sCalcPlaneMicGeo.normalPlane2MicVector_vec = [];
+sCPanel.sCalcPlaneMicGeo.normalXBodyVector_vec = [];
+sCPanel.sCalcPlaneMicGeo.shiftIndexPlane2Mic_vec = [];
+sCPanel.sCalcPlaneMicGeo.standardStructureName = 'sCalcPlaneMicGeo';
+%**************************************************************************
