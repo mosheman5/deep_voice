@@ -4,16 +4,15 @@ function disp_file(file_path, channel, start, length)
 %   start - start [sec] of file to display
 %   length - length [sec] of file to display
 
-     init_samples = [1,1000];
-    [y, Fs] = audioread(file_path,init_samples);
-    
-    if channel> size(y,2) 
-        error('requested channel non existnt in file')
-    end
-    
-    sample = [1+start*Fs, 1+ (start+length)*Fs];
-    [y, ~] = audioread(file_path, sample);
-    
-    signal_analyzer(y(:, channel), Fs);
+[dirpath,name,ext] = fileparts(file_path) ;
+filename = [name ext];
+DataPathName = [dirpath filesep];
+
+t_start = [2000 01  01  00 00 00+start];
+t_end = t_start; t_end(6)=t_end(6)+length;
+sSignal=createCPanel;
+sSignal=LoadSignal(sSignal, t_start, t_end, channel, 'BracketOverRide_handle', @LoadSignal_specific, ...
+    'DataPathName',DataPathName, 'FileName',filename);
+signal_analyzer(sSignal.sSignal.Signal_vec,sSignal.sSignal.SampleRate);
 
 end
