@@ -1060,44 +1060,34 @@ function doc_biosignals_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 gui_figure=handles.figure1;
 var=getappdata(gui_figure,'var');
-% the control part
-% stop;
-prompt = 'Please enter path for saving .txt files: ';
-str=var.saves_dir;
-defans = {str,date,'default','',''};
-pathforsave = inputdlg(prompt,'What is the Save Path?',2,defans);
-previous_cd=cd;
-cd(pathforsave{1,1});
+pathforsave = uigetdir(cd, 'Please choose path for saving .txt files');
 relevant_string=strcat(char(var.main_title),num2str(clock),'.txt');
-fid = fopen( relevant_string, 'wt' );
-% helpdlg('Now Choose the two corners of the boxes containing the signal one after another, press enter in text box when finished');
+fid = fopen( [pathforsave filesep relevant_string], 'wt' );
+
 FS = stoploop({'Choose the two corners of the boxes containing the signal one after another', 'press enter in text box when finished'}) ; 
-% start the loop 
 while(~FS.Stop()) 
-axes(handles.main_axes);
-[box_x,box_y, button]=ginput(2);
-if FS.Stop()
-    break
-end
-box_fmin=min(box_y);
-box_fmax=max(box_y);
-box_tmin=min(box_x);
-box_tmax=max(box_x);
-[pach,box_fmin_up_ind]=min(abs( (var.f_vec-box_fmin)));
-box_fmin_up=var.f_vec(box_fmin_up_ind);
-[pach,box_fmax_up_ind]=min(abs( (var.f_vec-box_fmax)));
-box_fmax_up=var.f_vec(box_fmax_up_ind);
-[pach,box_tmin_up_ind]=min(abs( (var.t_vec-box_tmin)));
-box_tmin_up=var.t_vec(box_tmin_up_ind);
-[pach,box_tmax_up_ind]=min(abs( (var.t_vec-box_tmax)));
-box_tmax_up=var.t_vec(box_tmax_up_ind);
+    axes(handles.main_axes);
+    [box_x,box_y, button]=ginput(2);
+    if FS.Stop()
+        break
+    end
+    box_fmin=min(box_y);
+    box_fmax=max(box_y);
+    box_tmin=min(box_x);
+    box_tmax=max(box_x);
+    [~,box_fmin_up_ind]=min(abs( (var.f_vec-box_fmin)));
+    box_fmin_up=var.f_vec(box_fmin_up_ind);
+    [~,box_fmax_up_ind]=min(abs( (var.f_vec-box_fmax)));
+    box_fmax_up=var.f_vec(box_fmax_up_ind);
+    [~,box_tmin_up_ind]=min(abs( (var.t_vec-box_tmin)));
+    box_tmin_up=var.t_vec(box_tmin_up_ind);
+    [~,box_tmax_up_ind]=min(abs( (var.t_vec-box_tmax)));
+    box_tmax_up=var.t_vec(box_tmax_up_ind);
 
-if button(1) == 3 || button(2) == 3
-    fprintf(fid, 'social call \n');
-end
-fprintf(fid, [ num2str(box_fmin_up) ' ' num2str(box_fmax_up) '\n'  num2str(box_tmin_up) ' ' num2str(box_tmax_up) '\n']);
-
-% fprintf(fid, [ num2str(box_fmin) ' ' num2str(box_fmax) 'r\n'  num2str(box_tmin) ' ' num2str(box_tmax) 'r\n']);
+    if button(1) == 3 || button(2) == 3
+        fprintf(fid, 'social call \n');
+    end
+    fprintf(fid, [ num2str(box_fmin_up) ' ' num2str(box_fmax_up) '\n'  num2str(box_tmin_up) ' ' num2str(box_tmax_up) '\n']);
 end 
 fprintf(fid, ['high cut' ''  num2str(var.high_cut) '\n']);
 fprintf(fid, ['low cut' ''  num2str(var.low_cut) '\n']);
@@ -1105,6 +1095,4 @@ fprintf(fid, ['nfft' ''  num2str(var.nfft_in) '\n']);
 fprintf(fid, ['window type' ''  num2str(var.window_type) '\n']);
 FS.Clear() ; % Clear up the box 
 clear FS ; % this structure has no use anymore
-%michael add 9/1/19
-cd(previous_cd);
 fclose(fid);
