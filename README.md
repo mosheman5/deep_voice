@@ -41,10 +41,6 @@ A demo of usage is found [here](https://drive.google.com/open?id=14VlU-bIzcIabtn
 
 ## Usage
 
-### 1. User Manual
-TBD
-
-### 2. Testing
 run demo:
 ```
 disp_file('./14.9.18/recordings/180914_150127_context.wav',1,0,30)
