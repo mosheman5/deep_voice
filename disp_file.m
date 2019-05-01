@@ -1,6 +1,6 @@
 function disp_file(file_path, channel, start, length)
 % DISP display the file file_path with signal_analyzer
-%   channel - channel to display from file
+%   channel - channel to display from filec
 %   start - start [sec] of file to display
 %   length - length [sec] of file to display
 
@@ -13,6 +13,6 @@ t_end = t_start; t_end(6)=t_end(6)+length;
 sSignal=createCPanel;
 sSignal=LoadSignal(sSignal, t_start, t_end, channel, 'BracketOverRide_handle', @LoadSignal_specific, ...
     'DataPathName',DataPathName, 'FileName',filename);
-signal_analyzer(sSignal.sSignal.Signal_vec,sSignal.sSignal.SampleRate);
+signal_analyzer(sSignal.sSignal.Signal_vec,sSignal.sSignal.SampleRate, name);
 
 end

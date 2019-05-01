@@ -1061,7 +1061,7 @@ function doc_biosignals_Callback(hObject, eventdata, handles)
 gui_figure=handles.figure1;
 var=getappdata(gui_figure,'var');
 pathforsave = uigetdir(cd, 'Please choose path for saving .txt files');
-relevant_string=strcat(char(var.main_title),num2str(clock),'.txt');
+relevant_string=strcat(char(var.main_title{4}),num2str(clock),'.txt');
 fid = fopen( [pathforsave filesep relevant_string], 'wt' );
 
 FS = stoploop({'Choose the two corners of the boxes containing the signal one after another', 'press enter in text box when finished'}) ; 
