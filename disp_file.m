@@ -13,6 +13,6 @@ t_end = t_start; t_end(6)=t_end(6)+length;
 sSignal=createCPanel;
 sSignal=LoadSignal(sSignal, t_start, t_end, channel, 'BracketOverRide_handle', @LoadSignal_specific, ...
     'DataPathName',DataPathName, 'FileName',filename);
-signal_analyzer(sSignal.sSignal.Signal_vec,sSignal.sSignal.SampleRate, name);
+signal_analyzer(sSignal.sSignal.Signal_vec,sSignal.sSignal.SampleRate, strcat(name,'(', num2str(channel) , ',' , num2str(start), ',' , num2str(length),')'));
 
 end
