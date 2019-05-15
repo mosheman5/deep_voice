@@ -1,6 +1,7 @@
 %enter signal txt
 tagging_folder = './tagging';
 wav_folder = './14.9.18/recordings';
+plot_flag = true;
 
 files_in_dir = dir(tagging_folder);
 
@@ -23,10 +24,87 @@ for file_ind = 3:length(files_in_dir)
     
     var = getappdata(gui_handle,'var');
     
-    CC = produce_best_CC(var, true);
+    CC = produce_best_CC(var, plot_flag);
     
-    [song_cell, social_cell] = bounding_box(gui_handle, tag_path, true);
+    [song_cell, social_cell] = bounding_box(gui_handle, tag_path, plot_flag);
     
+    tag_cell = [song_cell social_cell];
+    tag_cell(cellfun('isempty',tag_cell)) = [];
+    
+    [accuracy, precision, precision_best_CC]  = calc_detector_matrics(var, CC, tag_cell, plot_flag);
+        
+    
+end
+
+function [accuracy, precision, precision_best_CC]  = calc_detector_matrics(var, CC, tag_cell, do_plot)
+% returns matrices for the operation of our detector
+% In:
+%   var = contians the current spect data
+%   CC - the connected component struct representing the result of our
+%       detector
+%   tag_cell - cell array {'f1','f2','t1','t2'...} of the bounding box in
+%       the tag file
+%
+% Out:
+%  accuracy - the precent of pixels in each tag that are coverd by the
+%      total of CC's. is a vector, with a value for each tagged signal
+%  precision - the percent of total CC pixels that are in a bb. thats a
+%      single number
+%  precision_best_CC - same but for the best CC per tag file. is a vector
+%      matching accuracy
+
+accuracy = zeros(1, length(tag_cell)/4);
+precision_best_CC = zeros(1, length(tag_cell)/4);
+
+im_shape = size(var.b_mat);
+
+total_CCs = zeros(im_shape(1),im_shape(2));
+for CC_ind = 1:length(CC.PixelIdxList)
+    CC_mask = zeros(im_shape(1),im_shape(2));
+    
+    CC_mask(CC.PixelIdxList{CC_ind}) = 1;
+    total_CCs(CC.PixelIdxList{CC_ind}) = 1;
+end
+
+total_tags = zeros(im_shape(1),im_shape(2));
+for tag_ind = 1:4:length(tag_cell)
+    tag_mask = zeros(im_shape(1),im_shape(2));
+    
+    first_f=length(find(var.f_vec<= str2num(tag_cell{tag_ind})));
+    last_f=length(find(var.f_vec<= str2num(tag_cell{tag_ind+1})));
+    
+    first_t=length(find(var.t_vec<= str2num(tag_cell{tag_ind+2})));
+    last_t=length(find(var.t_vec<= str2num(tag_cell{tag_ind+3})));
+    
+    tag_mask(first_f:last_f, first_t:last_t) = 1;
+    total_tags(first_f:last_f, first_t:last_t) = 1;
+    
+    best_single_cc_precision = 0;
+    for CC_ind = 1:length(CC.PixelIdxList)
+        
+        CC_mask = zeros(im_shape(1),im_shape(2));
+        CC_mask(CC.PixelIdxList{CC_ind}) = 1;
+        
+        single_cc_precision = sum(sum((CC_mask & tag_mask)))/sum(sum(CC_mask));
+        
+        if single_cc_precision>best_single_cc_precision
+            best_single_cc_precision = single_cc_precision;
+        end
+    end
+    
+    precision_best_CC(1+(tag_ind-1)/4) = best_single_cc_precision;
+    accuracy(1+(tag_ind-1)/4)= sum(sum((total_CCs & tag_mask)))/sum(sum(tag_mask));
+    
+end
+
+precision = sum(sum((total_CCs & total_tags)))/sum(sum(total_CCs));
+
+if do_plot
+        disp(['accuracy: ' num2str(accuracy)])
+        disp(['precision_best_CC: ' num2str(precision_best_CC)])
+        disp(['precision: ' num2str(precision)])
+end
+
 end
 
 function [song_cell, social_cell] = bounding_box(gui_handle, tag_file_path, do_plot)
@@ -69,7 +147,7 @@ if do_plot
             ii_last_one=ii;
         else
             m=1;
-
+            
         end
     end
     
@@ -81,12 +159,13 @@ if do_plot
             m=4;
         else
             m=1;
-
+            
         end
     end
     
     sprintf ('black-song, red-social call');
 end
+
 end
 
 function CC = produce_best_CC(var, do_plot)
@@ -136,7 +215,7 @@ if do_plot
     
     axis tight; axis xy;
     
-%     setappdata(gui_figure,'var',var);
+    %     setappdata(gui_figure,'var',var);
 end
 
 end
