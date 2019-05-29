@@ -1,9 +1,11 @@
 %enter signal txt
-tagging_folder = './tagging';
-wav_folder = './14.9.18/recordings';
+tagging_folder = ['.' filesep 'tagging'];
+wav_folder = ['.' filesep 'recordings'];
+save_validation_results_in = ['.' filesep 'evaluation_results'];
 plot_flag = true;
 
 files_in_dir = dir(tagging_folder);
+
 
 for file_ind = 3:length(files_in_dir)
     tag_path = fullfile(files_in_dir(file_ind).folder,  files_in_dir(file_ind).name);
@@ -31,12 +33,17 @@ for file_ind = 3:length(files_in_dir)
     tag_cell = [song_cell social_cell];
     tag_cell(cellfun('isempty',tag_cell)) = [];
     
-    [accuracy, precision, precision_best_CC]  = calc_detector_matrics(var, CC, tag_cell, plot_flag);
-        
+    [accuracy, precision, precision_best_CC]  = calc_detector_matrics(var, CC, tag_cell, false, plot_flag);
+    [time_accuracy, time_precision, time_precision_best_CC]  = calc_detector_matrics(var, CC, tag_cell, true, plot_flag);
+    
+    fig = gcf;
+    fig.PaperPositionMode = 'auto';
+    print(fullfile(save_validation_results_in, [file_name '.jpg']),'-djpeg','-r300')
+    close
     
 end
 
-function [accuracy, precision, precision_best_CC]  = calc_detector_matrics(var, CC, tag_cell, do_plot)
+function [accuracy, precision, precision_best_CC]  = calc_detector_matrics(var, CC, tag_cell, do_time, do_plot)
 % returns matrices for the operation of our detector
 % In:
 %   var = contians the current spect data
@@ -44,6 +51,8 @@ function [accuracy, precision, precision_best_CC]  = calc_detector_matrics(var, 
 %       detector
 %   tag_cell - cell array {'f1','f2','t1','t2'...} of the bounding box in
 %       the tag file
+%   do_time - calc all detections only in the time domain, ignoring
+%       good/bad detection in respect to frequency
 %
 % Out:
 %  accuracy - the precent of pixels in each tag that are coverd by the
@@ -66,6 +75,10 @@ for CC_ind = 1:length(CC.PixelIdxList)
     total_CCs(CC.PixelIdxList{CC_ind}) = 1;
 end
 
+if do_time
+    total_CCs = any(total_CCs,2);
+end
+
 total_tags = zeros(im_shape(1),im_shape(2));
 for tag_ind = 1:4:length(tag_cell)
     tag_mask = zeros(im_shape(1),im_shape(2));
@@ -77,6 +90,10 @@ for tag_ind = 1:4:length(tag_cell)
     last_t=length(find(var.t_vec<= str2num(tag_cell{tag_ind+3})));
     
     tag_mask(first_f:last_f, first_t:last_t) = 1;
+    if do_time
+        tag_mask = any(tag_mask,2);
+    end
+    
     total_tags(first_f:last_f, first_t:last_t) = 1;
     
     best_single_cc_precision = 0;
@@ -85,7 +102,11 @@ for tag_ind = 1:4:length(tag_cell)
         CC_mask = zeros(im_shape(1),im_shape(2));
         CC_mask(CC.PixelIdxList{CC_ind}) = 1;
         
+        if do_time
+            CC_mask = any(CC_mask,2);
+        end
         single_cc_precision = sum(sum((CC_mask & tag_mask)))/sum(sum(CC_mask));
+        
         
         if single_cc_precision>best_single_cc_precision
             best_single_cc_precision = single_cc_precision;
@@ -97,12 +118,19 @@ for tag_ind = 1:4:length(tag_cell)
     
 end
 
+if do_time
+    total_tags = any(total_tags,2);
+end
+
 precision = sum(sum((total_CCs & total_tags)))/sum(sum(total_CCs));
 
 if do_plot
-        disp(['accuracy: ' num2str(accuracy)])
-        disp(['precision_best_CC: ' num2str(precision_best_CC)])
-        disp(['precision: ' num2str(precision)])
+    if do_time
+        disp('time matrices:')
+    end
+    disp(['accuracy: ' num2str(accuracy)])
+    disp(['precision_best_CC: ' num2str(precision_best_CC)])
+    disp(['precision: ' num2str(precision)])
 end
 
 end
@@ -112,10 +140,10 @@ function [song_cell, social_cell] = bounding_box(gui_handle, tag_file_path, do_p
 string_file_contents=fileread(tag_file_path);
 lines_in_file=splitlines(string_file_contents);
 file_one_line='';
-for ii=1:1:length(lines_in_file)
+for ii=1:1:(length(lines_in_file)-5)
     file_one_line=horzcat(file_one_line,' ',lines_in_file{ii});
 end
-string_file_contents=file_one_line(1:(length(string_file_contents)-54)); % 54 is length of
+string_file_contents=file_one_line;
 index=find(string_file_contents=='s');
 index_end=length(index);
 %number of social calls
