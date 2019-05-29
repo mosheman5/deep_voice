@@ -39,8 +39,13 @@ for file_ind = 3:length(files_in_dir)
     fig = gcf;
     fig.PaperPositionMode = 'auto';
     print(fullfile(save_validation_results_in, [file_name '.jpg']),'-djpeg','-r300')
-    close
+    save(fullfile(save_validation_results_in, [file_name '_val.txt']),...
+        'accuracy','precision_best_CC','precision',...
+        'time_accuracy','time_precision_best_CC','time_precision',...
+        '-ASCII');
     
+    close
+        
 end
 
 function [accuracy, precision, precision_best_CC]  = calc_detector_matrics(var, CC, tag_cell, do_time, do_plot)
