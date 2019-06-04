@@ -15,7 +15,7 @@ seg_params('upper_ent_thresh') = 0.4;
 
 
 for file_ind = 3:length(files_in_dir)
-    tag_path = fullfile(files_in_dir(file_ind).folder,  files_in_dir(file_iy)nd).name);
+    tag_path = fullfile(files_in_dir(file_ind).folder,  files_in_dir(file_ind).name);
     
     file_name = files_in_dir(file_ind).name(1:(end-4));
     
@@ -33,27 +33,29 @@ for file_ind = 3:length(files_in_dir)
         gui_handle = disp_file(wav_path, disp_params(1), disp_params(2), disp_params(3));
         
         var = getappdata(gui_handle,'var');
+        for i=1
+            seg_params('perentile_of_power_thresh')=seg_params('perentile_of_power_thresh')(mod(i,3));
+            CC = produce_best_CC(var, seg_params, plot_flag);
         
-        CC = produce_best_CC(var, seg_params, plot_flag);
+            [song_cell, social_cell] = bounding_box(gui_handle, tag_path, plot_flag);
         
-        [song_cell, social_cell] = bounding_box(gui_handle, tag_path, plot_flag);
+            tag_cell = [song_cell social_cell];
+            tag_cell(cellfun('isempty',tag_cell)) = [];
         
-        tag_cell = [song_cell social_cell];
-        tag_cell(cellfun('isempty',tag_cell)) = [];
-        
-        [accuracy, precision, precision_best_CC]  = calc_detector_matrics(var, CC, tag_cell, false, plot_flag);
-        [time_accuracy, time_precision, time_precision_best_CC]  = calc_detector_matrics(var, CC, tag_cell, true, plot_flag);
-        
-        fig = gcf;
-        fig.PaperPositionMode = 'auto';
-        print(fullfile(save_validation_results_in, [file_name '.jpg']),'-djpeg','-r300')
-        save(fullfile(save_validation_results_in, [file_name '_val.txt']),...
-            'accuracy','precision_best_CC','precision',...
-            'time_accuracy','time_precision_best_CC','time_precision',...
-            '-ASCII');
-        
-        close
-    catch
+            [accuracy, precision, precision_best_CC]  = calc_detector_matrics(var, CC, tag_cell, false, plot_flag);
+            [time_accuracy, time_precision, time_precision_best_CC]  = calc_detector_matrics(var, CC, tag_cell, true, plot_flag);
+            if(plot_flag==true)
+            fig = gcf;
+            fig.PaperPositionMode = 'auto';
+            print(fullfile(save_validation_results_in, [file_name '.jpg']),'-djpeg','-r300')
+            save(fullfile(save_validation_results_in, [file_name '_val.txt']),...
+              'accuracy','precision_best_CC','precision',...
+              'time_accuracy','time_precision_best_CC','time_precision',...
+              '-ASCII');
+            end
+            close
+        end
+        catch
         disp(['file ' wav_path ' should exist but dosnt' ]);
     end
     
