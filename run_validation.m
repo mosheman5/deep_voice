@@ -6,9 +6,16 @@ plot_flag = true;
 
 files_in_dir = dir(tagging_folder);
 
+seg_params = containers.Map;
+seg_params('low_cut') = 100;
+seg_params('high_cut') = 2000;
+seg_params('perentile_of_power_thresh') = 90;
+seg_params('min_cc_size') = 50;
+seg_params('upper_ent_thresh') = 0.4;
+
 
 for file_ind = 3:length(files_in_dir)
-    tag_path = fullfile(files_in_dir(file_ind).folder,  files_in_dir(file_ind).name);
+    tag_path = fullfile(files_in_dir(file_ind).folder,  files_in_dir(file_iy)nd).name);
     
     file_name = files_in_dir(file_ind).name(1:(end-4));
     
@@ -22,31 +29,38 @@ for file_ind = 3:length(files_in_dir)
     disp_params= sscanf( file_name(open_brace_loc(1):close_brace_loc(1)),  ...
         '(%d,%d,%d)');
     
-    gui_handle = disp_file(wav_path, disp_params(1), disp_params(2), disp_params(3));
-    
-    var = getappdata(gui_handle,'var');
-    
-    CC = produce_best_CC(var, plot_flag);
-    
-    [song_cell, social_cell] = bounding_box(gui_handle, tag_path, plot_flag);
-    
-    tag_cell = [song_cell social_cell];
-    tag_cell(cellfun('isempty',tag_cell)) = [];
-    
-    [accuracy, precision, precision_best_CC]  = calc_detector_matrics(var, CC, tag_cell, false, plot_flag);
-    [time_accuracy, time_precision, time_precision_best_CC]  = calc_detector_matrics(var, CC, tag_cell, true, plot_flag);
-    
-    fig = gcf;
-    fig.PaperPositionMode = 'auto';
-    print(fullfile(save_validation_results_in, [file_name '.jpg']),'-djpeg','-r300')
-    save(fullfile(save_validation_results_in, [file_name '_val.txt']),...
-        'accuracy','precision_best_CC','precision',...
-        'time_accuracy','time_precision_best_CC','time_precision',...
-        '-ASCII');
-    
-    close
+    try
+        gui_handle = disp_file(wav_path, disp_params(1), disp_params(2), disp_params(3));
         
+        var = getappdata(gui_handle,'var');
+        
+        CC = produce_best_CC(var, seg_params, plot_flag);
+        
+        [song_cell, social_cell] = bounding_box(gui_handle, tag_path, plot_flag);
+        
+        tag_cell = [song_cell social_cell];
+        tag_cell(cellfun('isempty',tag_cell)) = [];
+        
+        [accuracy, precision, precision_best_CC]  = calc_detector_matrics(var, CC, tag_cell, false, plot_flag);
+        [time_accuracy, time_precision, time_precision_best_CC]  = calc_detector_matrics(var, CC, tag_cell, true, plot_flag);
+        
+        fig = gcf;
+        fig.PaperPositionMode = 'auto';
+        print(fullfile(save_validation_results_in, [file_name '.jpg']),'-djpeg','-r300')
+        save(fullfile(save_validation_results_in, [file_name '_val.txt']),...
+            'accuracy','precision_best_CC','precision',...
+            'time_accuracy','time_precision_best_CC','time_precision',...
+            '-ASCII');
+        
+        close
+    catch
+        disp(['file ' wav_path ' should exist but dosnt' ]);
+    end
+    
 end
+
+save(fullfile(save_validation_results_in, 'params.mat'),...
+    'seg_params' );
 
 function [accuracy, precision, precision_best_CC]  = calc_detector_matrics(var, CC, tag_cell, do_time, do_plot)
 % returns matrices for the operation of our detector
@@ -201,7 +215,7 @@ end
 
 end
 
-function CC = produce_best_CC(var, do_plot)
+function CC = produce_best_CC(var, seg_params, do_plot)
 % this function runs the CC and selection thresholds (entropy, energy)
 % and returns the CC that passed the threshold
 
@@ -209,11 +223,11 @@ if nargin<2
     do_plot=0;
 end
 
-low_cut = 100;
-high_cut = 2000;
-perentile_of_power_thresh = 90;
-min_cc_size = 50;
-upper_ent_thresh = 0.3;
+low_cut = seg_params('low_cut');
+high_cut =  seg_params('high_cut');
+perentile_of_power_thresh =  seg_params('perentile_of_power_thresh');
+min_cc_size =  seg_params('min_cc_size');
+upper_ent_thresh =  seg_params('upper_ent_thresh');
 
 stft_mag = abs(var.b_mat);
 spl = mag2db(abs(stft_mag));
