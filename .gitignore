@@ -1,4 +1,7 @@
 *.m~
-evaluation_results/*
+evaluation_results*
 tagging/*
 *.ipynb_checkpoints*
+recordings/*
+tagging/*
+
