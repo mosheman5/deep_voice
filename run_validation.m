@@ -33,8 +33,8 @@ for file_ind = 3:length(files_in_dir)
         gui_handle = disp_file(wav_path, disp_params(1), disp_params(2), disp_params(3));
         
         var = getappdata(gui_handle,'var');
-        for i=1
-            seg_params('perentile_of_power_thresh')=seg_params('perentile_of_power_thresh')(mod(i,3));
+        %for i=1
+            %seg_params('perentile_of_power_thresh')=seg_params('perentile_of_power_thresh');
             CC = produce_best_CC(var, seg_params, plot_flag);
         
             [song_cell, social_cell] = bounding_box(gui_handle, tag_path, plot_flag);
@@ -54,7 +54,7 @@ for file_ind = 3:length(files_in_dir)
               '-ASCII');
             end
             close
-        end
+        %end
         catch
         disp(['file ' wav_path ' should exist but dosnt' ]);
     end
