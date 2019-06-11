@@ -15,7 +15,7 @@ seg_params('upper_ent_thresh') = 0.4;
 
 
 for file_ind = 3:length(files_in_dir)
-    tag_path = fullfile(files_in_dir(file_ind).folder,  files_in_dir(file_iy)nd).name);
+    tag_path = fullfile(files_in_dir(file_ind).folder,  files_in_dir(file_ind).name);
     
     file_name = files_in_dir(file_ind).name(1:(end-4));
     
@@ -33,28 +33,34 @@ for file_ind = 3:length(files_in_dir)
         gui_handle = disp_file(wav_path, disp_params(1), disp_params(2), disp_params(3));
         
         var = getappdata(gui_handle,'var');
+        %for i=1
+            %seg_params('perentile_of_power_thresh')=seg_params('perentile_of_power_thresh');
+            CC = produce_best_CC(var, seg_params, plot_flag);
         
-        CC = produce_best_CC(var, seg_params, plot_flag);
+            [song_cell, social_cell] = bounding_box(gui_handle, tag_path, plot_flag);
         
-        [song_cell, social_cell] = bounding_box(gui_handle, tag_path, plot_flag);
-        
-        tag_cell = [song_cell social_cell];
-        tag_cell(cellfun('isempty',tag_cell)) = [];
-        
-        [accuracy, precision, precision_best_CC]  = calc_detector_matrics(var, CC, tag_cell, false, plot_flag);
-        [time_accuracy, time_precision, time_precision_best_CC]  = calc_detector_matrics(var, CC, tag_cell, true, plot_flag);
-        
-        fig = gcf;
-        fig.PaperPositionMode = 'auto';
-        print(fullfile(save_validation_results_in, [file_name '.jpg']),'-djpeg','-r300')
-        save(fullfile(save_validation_results_in, [file_name '_val.txt']),...
-            'accuracy','precision_best_CC','precision',...
-            'time_accuracy','time_precision_best_CC','time_precision',...
-            '-ASCII');
-        
-        close
-    catch
+            tag_cell = [song_cell social_cell];
+            tag_cell(cellfun('isempty',tag_cell)) = [];
+            
+            [accuracy, precision, precision_best_CC]  = calc_detector_matrics(var, CC, tag_cell, false, plot_flag);
+            [time_accuracy, time_precision, time_precision_best_CC]  = calc_detector_matrics(var, CC, tag_cell, true, plot_flag);
+            
+            save(fullfile(save_validation_results_in, [file_name '_val.txt']),...
+                'accuracy','precision_best_CC','precision',...
+                'time_accuracy','time_precision_best_CC','time_precision',...
+                '-ASCII');
+            if(plot_flag==true)
+                fig = gcf;
+                fig.PaperPositionMode = 'auto';
+                
+                print(fullfile(save_validation_results_in, [file_name '.jpg']),'-djpeg','-r300')
+                
+            end
+            %end
+            close
+    catch e
         disp(['file ' wav_path ' should exist but dosnt' ]);
+        rethrow(e)
     end
     
 end
@@ -169,12 +175,12 @@ index_end=length(index);
 song_call_string=string_file_contents;
 social_call_string='';
 for ii=1:1:length(index)
-    s_call_container=string_file_contents(index(ii):end);
+    s_call_container=[string_file_contents(index(ii):end) ' '];
     pivot=find(s_call_container==' ',7);
-    index_end(ii)=pivot(7);
+    index_end(ii)=pivot(end);
     num=12;%number of letters to the coordiantes of tagging
-    social_call_string=horzcat(social_call_string,string_file_contents((index(ii)+num):index_end(ii)));
-    song_call_string((index):index_end(ii))=repmat('q',1,index_end(ii)-index+1);
+    social_call_string=horzcat(social_call_string,string_file_contents((index(ii)+num):(index(ii)+index_end(ii)-2)));
+    song_call_string((index(ii)):(index(ii)+index_end(ii)-2))=repmat('q',1,index_end(ii)-1);
 end
 %now build a matrix where I drop off the q sequence
 song_call_string=song_call_string(find (song_call_string~='q'));
