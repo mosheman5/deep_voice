@@ -34,17 +34,17 @@ for file_ind = 3:length(files_in_dir)
         gui_handle = disp_file(wav_path, disp_params(1), disp_params(2), disp_params(3));
         
         var = getappdata(gui_handle,'var');
-        j=0; %min CC index
-        k=0; %ent index
-        for i=0:length(paramsList('perentile_of_power_thresh'))*length(paramsList('min_cc_size'))*length(paramsList('upper_ent_thresh'))
+        j=1; %min CC index
+        k=1; %ent index
+        for i=1:length(paramsList('perentile_of_power_thresh'))*length(paramsList('min_cc_size'))*length(paramsList('upper_ent_thresh'))
             temp_p=paramsList('perentile_of_power_thresh');
             temp_CC=paramsList('min_cc_size');
             temp_E=paramsList('upper_ent_thresh');
+            seg_params('perentile_of_power_thresh')=temp_p(length(paramsList('perentile_of_power_thresh'))-mod(i,length(paramsList('perentile_of_power_thresh'))));
+            seg_params('min_cc_size')=temp_CC(length(paramsList('min_cc_size'))-mod(j,length(paramsList('min_cc_size'))));
+            seg_params('upper_ent_thresh')=temp_E(length(paramsList('upper_ent_thresh'))-mod(k,length(paramsList('upper_ent_thresh'))));
             j=j+isequal(mod(i,length(paramsList('perentile_of_power_thresh'))),1); %every new loop of i, change j
-            k=k+isequal(mod(j,length(paramsList('min_cc_size'))),1); %every new loop of j, change k
-            seg_params('perentile_of_power_thresh')=temp_p(mod(i,length(paramsList('perentile_of_power_thresh')))+1);
-            seg_params('min_cc_size')=temp_CC(mod(j,length(paramsList('min_cc_size')))+1);
-            seg_params('upper_ent_thresh')=temp_E(mod(k,length(paramsList('upper_ent_thresh')))+1);
+            k=k+isequal(mod(i,length(paramsList('min_cc_size'))*length(paramsList('perentile_of_power_thresh'))),1); %every new loop of j, change k
             save_validation_results_in = ['.' filesep ['evaluation_results',num2str(seg_params('perentile_of_power_thresh')),...
                 '_',num2str(seg_params('min_cc_size')),'_dot',num2str(seg_params('upper_ent_thresh')*10,'%d')]]; %folder name e.g. "evaluation_results_90_50_0.4"
             CC = produce_best_CC(var, seg_params, plot_flag);
@@ -77,7 +77,6 @@ for file_ind = 3:length(files_in_dir)
     %end
     
 end
-
 
 function [accuracy, precision, precision_best_CC]  = calc_detector_matrics(var, CC, tag_cell, do_time, do_plot)
 % returns matrices for the operation of our detector
@@ -186,12 +185,12 @@ index_end=length(index);
 song_call_string=string_file_contents;
 social_call_string='';
 for ii=1:1:length(index)
-    s_call_container=string_file_contents(index(ii):end);
+    s_call_container=[string_file_contents(index(ii):end) ' '];
     pivot=find(s_call_container==' ',7);
-    index_end(ii)=pivot(7);
+    index_end(ii)=pivot(end);
     num=12;%number of letters to the coordiantes of tagging
-    social_call_string=horzcat(social_call_string,string_file_contents((index(ii)+num):index_end(ii)));
-    song_call_string((index):index_end(ii))=repmat('q',1,index_end(ii)-index+1);
+    social_call_string=horzcat(social_call_string,string_file_contents((index(ii)+num):(index(ii)+index_end(ii)-2)));
+    song_call_string((index(ii)):(index(ii)+index_end(ii)-2))=repmat('q',1,index_end(ii)-1);
 end
 %now build a matrix where I drop off the q sequence
 song_call_string=song_call_string(find (song_call_string~='q'));
@@ -283,3 +282,4 @@ if do_plot
 end
 
 end
+
