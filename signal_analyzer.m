@@ -1009,8 +1009,8 @@ function time_mean_axes_ButtonDownFcn(hObject, eventdata, handles)
 function hpf_Callback(hObject, eventdata, handles)
 gui_figure=handles.figure1;
 var=getappdata(gui_figure,'var');
-mode = questdlg('Crop or Block?','Cropper','Crop','Block','Crop');
-box_f=(var.f_vec<=50 & var.f_vec>=-2);
+mode = 'Block';
+box_f=(var.f_vec<=110 & var.f_vec>=-2);
 box_t=(var.t_vec<=1000 & var.t_vec>=0.00001)';
 switch mode
     case 'Crop'
