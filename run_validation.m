@@ -7,11 +7,12 @@ plot_flag = true;
 files_in_dir = dir(tagging_folder);
 
 seg_params = containers.Map;
+paramsList=containers.Map;
 seg_params('low_cut') = 100;
 seg_params('high_cut') = 2000;
-seg_params('perentile_of_power_thresh') = 90;
-seg_params('min_cc_size') = 50;
-seg_params('upper_ent_thresh') = 0.4;
+paramsList('perentile_of_power_thresh') = [88,90,92];
+paramsList('min_cc_size') = [40,50,60];
+paramsList('upper_ent_thresh') = [0.3,0.4,0.5];
 
 
 for file_ind = 3:length(files_in_dir)
@@ -29,12 +30,23 @@ for file_ind = 3:length(files_in_dir)
     disp_params= sscanf( file_name(open_brace_loc(1):close_brace_loc(1)),  ...
         '(%d,%d,%d)');
     
-    try
+    %try
         gui_handle = disp_file(wav_path, disp_params(1), disp_params(2), disp_params(3));
         
         var = getappdata(gui_handle,'var');
-        %for i=1
-            %seg_params('perentile_of_power_thresh')=seg_params('perentile_of_power_thresh');
+        j=0; %min CC index
+        k=0; %ent index
+        for i=0:length(paramsList('perentile_of_power_thresh'))*length(paramsList('min_cc_size'))*length(paramsList('upper_ent_thresh'))
+            temp_p=paramsList('perentile_of_power_thresh');
+            temp_CC=paramsList('min_cc_size');
+            temp_E=paramsList('upper_ent_thresh');
+            j=j+isequal(mod(i,length(paramsList('perentile_of_power_thresh'))),1); %every new loop of i, change j
+            k=k+isequal(mod(j,length(paramsList('min_cc_size'))),1); %every new loop of j, change k
+            seg_params('perentile_of_power_thresh')=temp_p(mod(i,length(paramsList('perentile_of_power_thresh')))+1);
+            seg_params('min_cc_size')=temp_CC(mod(j,length(paramsList('min_cc_size')))+1);
+            seg_params('upper_ent_thresh')=temp_E(mod(k,length(paramsList('upper_ent_thresh')))+1);
+            save_validation_results_in = ['.' filesep ['evaluation_results',num2str(seg_params('perentile_of_power_thresh')),...
+                '_',num2str(seg_params('min_cc_size')),'_dot',num2str(seg_params('upper_ent_thresh')*10,'%d')]]; %folder name e.g. "evaluation_results_90_50_0.4"
             CC = produce_best_CC(var, seg_params, plot_flag);
         
             [song_cell, social_cell] = bounding_box(gui_handle, tag_path, plot_flag);
@@ -44,6 +56,9 @@ for file_ind = 3:length(files_in_dir)
         
             [accuracy, precision, precision_best_CC]  = calc_detector_matrics(var, CC, tag_cell, false, plot_flag);
             [time_accuracy, time_precision, time_precision_best_CC]  = calc_detector_matrics(var, CC, tag_cell, true, plot_flag);
+            if(isfolder(save_validation_results_in)==false)
+                 mkdir(save_validation_results_in)
+            end
             if(plot_flag==true)
             fig = gcf;
             fig.PaperPositionMode = 'auto';
@@ -53,16 +68,16 @@ for file_ind = 3:length(files_in_dir)
               'time_accuracy','time_precision_best_CC','time_precision',...
               '-ASCII');
             end
-            close
-        %end
-        catch
-        disp(['file ' wav_path ' should exist but dosnt' ]);
-    end
+            
+            save(fullfile(save_validation_results_in, 'params.mat'),...
+            'seg_params' ); 
+        end
+    %catch
+     %   disp(['file ' wav_path ' should exist but dosnt' ]);
+    %end
     
 end
 
-save(fullfile(save_validation_results_in, 'params.mat'),...
-    'seg_params' );
 
 function [accuracy, precision, precision_best_CC]  = calc_detector_matrics(var, CC, tag_cell, do_time, do_plot)
 % returns matrices for the operation of our detector
