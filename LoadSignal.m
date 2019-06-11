@@ -52,6 +52,7 @@ if nargin >= 4      %update channel nunber to be read
     sSignal.ChannelNumber = channelIndex;
 end
 
+%Michael add 11/6/19 
 BracketOverRide_handle = sSignal.BracketOverRide_handle;
 if ~isempty(BracketOverRide_handle)
     sSignal = feval(BracketOverRide_handle, sSignal);
