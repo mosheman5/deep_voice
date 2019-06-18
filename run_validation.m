@@ -1,5 +1,5 @@
 %enter signal txt
-tagging_folder = ['.' filesep 'tagging'];
+tagging_folder = ['.' filesep 'tagging_social_only'];
 wav_folder = ['.' filesep 'recordings'];
 save_validation_results_in = ['.' filesep 'evaluation_results'];
 plot_flag = true;
@@ -194,7 +194,9 @@ if do_plot
     for ii=1:m:(length(song_cell)-3)
         
         if ~isempty(str2num(song_cell{1,ii})) && ~isempty(str2num(song_cell{1,ii+3})) && (ii-ii_last_one)>3
-            rectangle('position',[str2num(song_cell{1,ii+2}) str2num(song_cell{1,ii}) (str2num(song_cell{1,ii+3})-str2num(song_cell{1,ii+2})) (str2num(song_cell{1,ii+1})-str2num(song_cell{1,ii}))],'EdgeColor','k',...
+            f_coord = sort([str2num(song_cell{1,ii}), str2num(song_cell{1,ii+1})]);
+            t_coord = sort([str2num(song_cell{1,ii+2}), str2num(song_cell{1,ii+3})]);
+            rectangle('position',[t_coord(1), f_coord(1), diff(t_coord), diff(f_coord)],'EdgeColor','k',...
                 'LineWidth',3)   ;
             m=4;
             ii_last_one=ii;
@@ -204,12 +206,17 @@ if do_plot
         end
     end
     
+    m=1;
+    ii_last_one=-3;
     for ii=1:m:(length(social_cell)-3)
         
-        if ~isempty(str2num(social_cell{1,ii})) && ~isempty(str2num(social_cell{1,ii+3}))
-            rectangle('position',[str2num(social_cell{1,ii+2}) str2num(social_cell{1,ii}) (str2num(social_cell{1,ii+3})-str2num(social_cell{1,ii+2})) (str2num(social_cell{1,ii+1})-str2num(social_cell{1,ii}))],'EdgeColor','r',...
-                'LineWidth',3)   ;
+        if ~isempty(str2num(social_cell{1,ii})) && ~isempty(str2num(social_cell{1,ii+3}))  && (ii-ii_last_one)>3
+            f_coord = sort([str2num(social_cell{1,ii}), str2num(social_cell{1,ii+1})]);
+            t_coord = sort([str2num(social_cell{1,ii+2}), str2num(social_cell{1,ii+3})]);
+            rectangle('position',[t_coord(1), f_coord(1), diff(t_coord), diff(f_coord)],'EdgeColor','r',...
+                'LineWidth',3)   ;    
             m=4;
+            ii_last_one=ii;
         else
             m=1;
             

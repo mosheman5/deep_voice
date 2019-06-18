@@ -4,4 +4,6 @@ tagging/*
 *.ipynb_checkpoints*
 recordings/*
 tagging/*
+*.txt
+*.csv
 
