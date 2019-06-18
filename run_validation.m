@@ -1,5 +1,5 @@
 %enter signal txt
-tagging_folder = ['.' filesep 'tagging_social_only'];
+tagging_folder = ['.' filesep 'tagging'];
 wav_folder = ['.' filesep 'recordings'];
 save_validation_results_in = ['.' filesep 'evaluation_results'];
 plot_flag = true;
@@ -10,9 +10,9 @@ seg_params = containers.Map;
 paramsList=containers.Map;
 seg_params('low_cut') = 100;
 seg_params('high_cut') = 2000;
-paramsList('perentile_of_power_thresh') = [88,90,92];
-paramsList('min_cc_size') = [40,50,60];
-paramsList('upper_ent_thresh') = [0.3,0.4,0.5];
+paramsList('perentile_of_power_thresh') = [70,85,90,96,98];
+paramsList('min_cc_size') = [10, 50];
+paramsList('upper_ent_thresh') = [0.7,0.85,1];
 
 
 for file_ind = 3:length(files_in_dir)
@@ -43,8 +43,8 @@ for file_ind = 3:length(files_in_dir)
         seg_params('perentile_of_power_thresh')=temp_p(length(paramsList('perentile_of_power_thresh'))-mod(i,length(paramsList('perentile_of_power_thresh'))));
         seg_params('min_cc_size')=temp_CC(length(paramsList('min_cc_size'))-mod(j,length(paramsList('min_cc_size'))));
         seg_params('upper_ent_thresh')=temp_E(length(paramsList('upper_ent_thresh'))-mod(k,length(paramsList('upper_ent_thresh'))));
-        j=j+isequal(mod(i,length(paramsList('perentile_of_power_thresh'))),1); %every new loop of i, change j
-        k=k+isequal(mod(i,length(paramsList('min_cc_size'))*length(paramsList('perentile_of_power_thresh'))),1); %every new loop of j, change k
+        j=j+isequal(mod(i,length(paramsList('perentile_of_power_thresh'))),0); %every new loop of i, change j
+        k=k+isequal(mod(i,length(paramsList('min_cc_size'))*length(paramsList('perentile_of_power_thresh'))),0); %every new loop of j, change k
         save_validation_results_in = ['.' filesep ['evaluation_results',num2str(seg_params('perentile_of_power_thresh')),...
             '_',num2str(seg_params('min_cc_size')),'_dot',num2str(seg_params('upper_ent_thresh')*10,'%d')]]; %folder name e.g. "evaluation_results_90_50_0.4"
         CC = produce_best_CC(var, seg_params, plot_flag);
@@ -98,7 +98,7 @@ function [accuracy, precisions, precision]  = calc_detector_matrics(var, CC, tag
 %      matching accuracy
 
 accuracy = zeros(1, length(tag_cell)/4);
-precisions=zeros(length(CC.PixelIdxList));
+precisions=zeros(1, length(CC.PixelIdxList));
 
 im_shape = size(var.b_mat);
 
