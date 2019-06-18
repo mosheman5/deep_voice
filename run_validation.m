@@ -31,54 +31,54 @@ for file_ind = 3:length(files_in_dir)
         '(%d,%d,%d)');
     
     %try
-        gui_handle = disp_file(wav_path, disp_params(1), disp_params(2), disp_params(3));
+    gui_handle = disp_file(wav_path, disp_params(1), disp_params(2), disp_params(3));
+    
+    var = getappdata(gui_handle,'var');
+    j=1; %min CC index
+    k=1; %ent index
+    for i=1:length(paramsList('perentile_of_power_thresh'))*length(paramsList('min_cc_size'))*length(paramsList('upper_ent_thresh'))
+        temp_p=paramsList('perentile_of_power_thresh');
+        temp_CC=paramsList('min_cc_size');
+        temp_E=paramsList('upper_ent_thresh');
+        seg_params('perentile_of_power_thresh')=temp_p(length(paramsList('perentile_of_power_thresh'))-mod(i,length(paramsList('perentile_of_power_thresh'))));
+        seg_params('min_cc_size')=temp_CC(length(paramsList('min_cc_size'))-mod(j,length(paramsList('min_cc_size'))));
+        seg_params('upper_ent_thresh')=temp_E(length(paramsList('upper_ent_thresh'))-mod(k,length(paramsList('upper_ent_thresh'))));
+        j=j+isequal(mod(i,length(paramsList('perentile_of_power_thresh'))),1); %every new loop of i, change j
+        k=k+isequal(mod(i,length(paramsList('min_cc_size'))*length(paramsList('perentile_of_power_thresh'))),1); %every new loop of j, change k
+        save_validation_results_in = ['.' filesep ['evaluation_results',num2str(seg_params('perentile_of_power_thresh')),...
+            '_',num2str(seg_params('min_cc_size')),'_dot',num2str(seg_params('upper_ent_thresh')*10,'%d')]]; %folder name e.g. "evaluation_results_90_50_0.4"
+        CC = produce_best_CC(var, seg_params, plot_flag);
         
-        var = getappdata(gui_handle,'var');
-        j=1; %min CC index
-        k=1; %ent index
-        for i=1:length(paramsList('perentile_of_power_thresh'))*length(paramsList('min_cc_size'))*length(paramsList('upper_ent_thresh'))
-            temp_p=paramsList('perentile_of_power_thresh');
-            temp_CC=paramsList('min_cc_size');
-            temp_E=paramsList('upper_ent_thresh');
-            seg_params('perentile_of_power_thresh')=temp_p(length(paramsList('perentile_of_power_thresh'))-mod(i,length(paramsList('perentile_of_power_thresh'))));
-            seg_params('min_cc_size')=temp_CC(length(paramsList('min_cc_size'))-mod(j,length(paramsList('min_cc_size'))));
-            seg_params('upper_ent_thresh')=temp_E(length(paramsList('upper_ent_thresh'))-mod(k,length(paramsList('upper_ent_thresh'))));
-            j=j+isequal(mod(i,length(paramsList('perentile_of_power_thresh'))),1); %every new loop of i, change j
-            k=k+isequal(mod(i,length(paramsList('min_cc_size'))*length(paramsList('perentile_of_power_thresh'))),1); %every new loop of j, change k
-            save_validation_results_in = ['.' filesep ['evaluation_results',num2str(seg_params('perentile_of_power_thresh')),...
-                '_',num2str(seg_params('min_cc_size')),'_dot',num2str(seg_params('upper_ent_thresh')*10,'%d')]]; %folder name e.g. "evaluation_results_90_50_0.4"
-            CC = produce_best_CC(var, seg_params, plot_flag);
+        [song_cell, social_cell] = bounding_box(gui_handle, tag_path, plot_flag);
         
-            [song_cell, social_cell] = bounding_box(gui_handle, tag_path, plot_flag);
+        tag_cell = [song_cell social_cell];
+        tag_cell(cellfun('isempty',tag_cell)) = [];
         
-            tag_cell = [song_cell social_cell];
-            tag_cell(cellfun('isempty',tag_cell)) = [];
-        
-            [accuracy, precision, precision_best_CC]  = calc_detector_matrics(var, CC, tag_cell, false, plot_flag);
-            [time_accuracy, time_precision, time_precision_best_CC]  = calc_detector_matrics(var, CC, tag_cell, true, plot_flag);
-            if(isfolder(save_validation_results_in)==false)
-                 mkdir(save_validation_results_in)
-            end
-            if(plot_flag==true)
+        [accuracy, precisions, precision]  = calc_detector_matrics(var, CC, tag_cell, false, plot_flag);
+        [time_accuracy, time_precisions, time_precision]  = calc_detector_matrics(var, CC, tag_cell, true, plot_flag);
+        if(isfolder(save_validation_results_in)==false)
+            mkdir(save_validation_results_in)
+        end
+        if(plot_flag==true)
             fig = gcf;
             fig.PaperPositionMode = 'auto';
             print(fullfile(save_validation_results_in, [file_name '.jpg']),'-djpeg','-r300')
             save(fullfile(save_validation_results_in, [file_name '_val.txt']),...
-              'accuracy','precision_best_CC','precision',...
-              'time_accuracy','time_precision_best_CC','time_precision',...
-              '-ASCII');
-            end
-            
-            save(fullfile(save_validation_results_in, 'params.mat'),...
-            'seg_params' ); 
+                'accuracy','precisions','precision',... % precision = full file precision
+                'time_accuracy','time_precisions','time_precision',...
+                '-ASCII');
         end
+        
+        save(fullfile(save_validation_results_in, 'params.mat'),...
+            'seg_params' );
+    end
     %catch
-     %   disp(['file ' wav_path ' should exist but dosnt' ]);
+    %   disp(['file ' wav_path ' should exist but dosnt' ]);
     %end
     
 end
 
-function [accuracy, precision, precision_best_CC]  = calc_detector_matrics(var, CC, tag_cell, do_time, do_plot)
+function [accuracy, precisions, precision]  = calc_detector_matrics(var, CC, tag_cell, do_time, do_plot)
 % returns matrices for the operation of our detector
 % In:
 %   var = contians the current spect data
@@ -98,7 +98,7 @@ function [accuracy, precision, precision_best_CC]  = calc_detector_matrics(var, 
 %      matching accuracy
 
 accuracy = zeros(1, length(tag_cell)/4);
-precision_best_CC = zeros(1, length(tag_cell)/4);
+precisions=zeros(length(CC.PixelIdxList));
 
 im_shape = size(var.b_mat);
 
@@ -131,30 +131,24 @@ for tag_ind = 1:4:length(tag_cell)
     
     total_tags(first_f:last_f, first_t:last_t) = 1;
     
-    best_single_cc_precision = 0;
-    for CC_ind = 1:length(CC.PixelIdxList)
-        
-        CC_mask = zeros(im_shape(1),im_shape(2));
-        CC_mask(CC.PixelIdxList{CC_ind}) = 1;
-        
-        if do_time
-            CC_mask = any(CC_mask,2);
-        end
-        single_cc_precision = sum(sum((CC_mask & tag_mask)))/sum(sum(CC_mask));
-        
-        
-        if single_cc_precision>best_single_cc_precision
-            best_single_cc_precision = single_cc_precision;
-        end
-    end
-    
-    precision_best_CC(1+(tag_ind-1)/4) = best_single_cc_precision;
     accuracy(1+(tag_ind-1)/4)= sum(sum((total_CCs & tag_mask)))/sum(sum(tag_mask));
     
 end
 
 if do_time
     total_tags = any(total_tags,2);
+end
+
+for CC_ind = 1:length(CC.PixelIdxList)
+    
+    CC_mask = zeros(im_shape(1),im_shape(2));
+    CC_mask(CC.PixelIdxList{CC_ind}) = 1;
+    
+    if do_time
+        CC_mask = any(CC_mask,2);
+    end
+    single_cc_precision = sum(sum((CC_mask & total_tags)))/sum(sum(CC_mask));
+    precisions(CC_ind)=single_cc_precision;
 end
 
 precision = sum(sum((total_CCs & total_tags)))/sum(sum(total_CCs));
@@ -164,8 +158,8 @@ if do_plot
         disp('time matrices:')
     end
     disp(['accuracy: ' num2str(accuracy)])
-    disp(['precision_best_CC: ' num2str(precision_best_CC)])
-    disp(['precision: ' num2str(precision)])
+    disp(['precisions: ' num2str(precisions)])
+    disp(['full file precision: ' num2str(precision)])
 end
 
 end
@@ -224,7 +218,7 @@ if do_plot
             f_coord = sort([str2num(social_cell{1,ii}), str2num(social_cell{1,ii+1})]);
             t_coord = sort([str2num(social_cell{1,ii+2}), str2num(social_cell{1,ii+3})]);
             rectangle('position',[t_coord(1), f_coord(1), diff(t_coord), diff(f_coord)],'EdgeColor','r',...
-                'LineWidth',3)   ;    
+                'LineWidth',3)   ;
             m=4;
             ii_last_one=ii;
         else
