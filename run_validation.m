@@ -67,11 +67,17 @@ for file_ind = 3:length(files_in_dir)
                 'accuracy','precisions','precision',... % precision = full file precision
                 'time_accuracy','time_precisions','time_precision',...
                 '-ASCII');
+            
+            close
         end
         
         save(fullfile(save_validation_results_in, 'params.mat'),...
             'seg_params' );
+        
+        
     end
+    
+    clear gui_handle var
     %catch
     %   disp(['file ' wav_path ' should exist but dosnt' ]);
     %end
