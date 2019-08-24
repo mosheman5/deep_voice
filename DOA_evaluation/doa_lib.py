@@ -79,7 +79,7 @@ def sim_room(signal, fs, room_dim = [10000, 10000, 10000], r_source=[5005, 7.5, 
     mic_array = pra.MicrophoneArray(r_rec, aroom.fs)
     aroom.add_microphone_array(mic_array)
 
-    aroom.plot()
+#     aroom.plot()
     
     aroom.compute_rir()
     aroom.simulate()
@@ -116,9 +116,9 @@ def add_noise(signal_dual, SNR=0, noise_location_doc='silence_180910_142834.txt'
     ENR_sig = np.sum(signal_dual**2, axis=1, keepdims=True)
     ENR_noise = np.sum(noise_data**2, axis=1, keepdims=True)
     
-    total_sig_noise = np.sqrt(10**(SNR/10))*(signal_dual / np.sqrt(ENR_sig)) + (noise_data / np.sqrt(ENR_noise))
+    total_sig_noise = np.sqrt(10**(SNR/10))*(signal_dual / np.sqrt(ENR_sig.max())) + (noise_data / np.sqrt(ENR_noise))
     
-    noised_signal = total_sig_noise / np.sqrt(np.sum(total_sig_noise**2, axis=1, keepdims=True))
+    noised_signal = total_sig_noise / np.sqrt(np.sum(total_sig_noise**2, axis=1, keepdims=True)).max()
     
     return noised_signal
 
