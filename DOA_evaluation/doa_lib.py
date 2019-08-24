@@ -24,7 +24,7 @@ scale_fact = 10000
 
 def read_sound(file_name, time=[231, 245], channel = 0):
     data, fs = soundfile.read(file_name, stop=10)
-    data, fs = soundfile.read(file_name, start=time[0]*fs, stop=time[1]*fs)
+    data, fs = soundfile.read(file_name, start=np.round(time[0]*fs).astype('int'), stop=np.round(time[1]*fs).astype('int'))
     
     data = data[:,0]
     
@@ -84,7 +84,7 @@ def sim_room(signal, fs, room_dim = [10000, 10000, 10000], r_source=[5005, 7.5, 
     aroom.compute_rir()
     aroom.simulate()
     
-    out_signal = aroom.mic_array.signals
+    out_signal = aroom.mic_array.signals[:, np.round(fs*0.1).astype('int'):signal.shape[0]]
     
     # normalize to originl sound levels
     org_ENR = np.sum(signal**2)
@@ -103,7 +103,7 @@ def add_noise(signal_dual, SNR=0, noise_location_doc='silence_180910_142834.txt'
     file_name = os.path.join('../recordings', '_'.join('silence_180910_142834.txt'.split('_')[1:3])[:-3] + 'wav')
     
     sea_noise_times = pd.read_csv(noise_location_doc, sep=' ', header=None).values
-    noise_data_1, _ = read_sound(file_name, sea_noise_times[0, :])
+    noise_data_1, fs = read_sound(file_name, sea_noise_times[0, :])
     noise_data_2, _ = read_sound(file_name, sea_noise_times[1, :])
     noise_data = np.concatenate((noise_data_1.reshape(1,-1), noise_data_2.reshape(1,-1)), axis=0)
     
@@ -116,7 +116,7 @@ def add_noise(signal_dual, SNR=0, noise_location_doc='silence_180910_142834.txt'
     ENR_sig = np.sum(signal_dual**2, axis=1, keepdims=True)
     ENR_noise = np.sum(noise_data**2, axis=1, keepdims=True)
     
-    total_sig_noise = np.sqrt(10**(SNR/10))*(signal_dual / np.sqrt(ENR_sig.max())) + (noise_data / np.sqrt(ENR_noise))
+    total_sig_noise = np.sqrt(10**(SNR/20))*(signal_dual / np.sqrt(ENR_sig.max())) + (noise_data / np.sqrt(ENR_noise))
     
     noised_signal = total_sig_noise / np.sqrt(np.sum(total_sig_noise**2, axis=1, keepdims=True)).max()
     
