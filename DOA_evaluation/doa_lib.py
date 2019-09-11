@@ -24,32 +24,34 @@ scale_fact = 10000
 
 def read_sound(file_name, time=[231, 245], channel = 0):
     data, fs = soundfile.read(file_name, stop=10)
-    data, fs = soundfile.read(file_name, start=time[0]*fs, stop=time[1]*fs)
-    
-    data = data[:,0]
+    data, fs = soundfile.read(file_name, start=np.round(time[0]*fs).astype(int), stop=np.round(time[1]*fs).astype(int))
+
+    if len(data.shape)>1:
+        data = data[:,channel]
     
     return data, fs
 
 
-def spect(data, fs, fmin=100, fmax = 1000, nfft_ratio=11, overlap_ratio=16, Gain = 35, figsize=(15, 10)):
+def spect(data, fs, fmin=100, fmax = 1000, nfft_ratio=8, overlap_ratio=1, Gain = 35, figsize=(15, 10)):
 
        
     # Simple API
     nfft=int(1024*nfft_ratio)
+    hop_length = int(nfft/(overlap_ratio*1.))
 
-    X = librosa.stft(data, n_fft=nfft, hop_length=int(nfft/(overlap_ratio*1.)))
+    X = librosa.stft(data, n_fft=nfft, hop_length=hop_length)
 
     Xdb = librosa.amplitude_to_db(abs(X))
     
-    Y = np.copy(Xdb)
-    Y[:int(X.shape[0]*2*fmin/(fs)),:] = 0
-    Y = Y[:int(X.shape[0]*(fmax*2./(fs))), :]
-    vmin = Y.min()
-    vmax = Y.max()
+#     Y = np.copy(Xdb)
+#     Y[:int(X.shape[0]*1.*fmin/(fs)),:] = 0
+#     Y = Y[:int(X.shape[0]*(fmax*1./(fs))), :]
+#     vmin = Y.min()
+#     vmax = Y.max()
 #     print(vmin, vmax)
     
     plt.figure(figsize=figsize)
-    librosa.display.specshow(Xdb, sr=fs, x_axis='time', y_axis='hz', cmap='inferno')
+    librosa.display.specshow(Xdb, sr=fs, x_axis='time', y_axis='hz', cmap='inferno', hop_length=hop_length)
     plt.ylim([fmin, fmax])
     plt.clim(vmin=-30, vmax=10)
     
@@ -134,8 +136,8 @@ def produce_spect_for_music(signal, nfft=1024, overlap_ratio=1, fft_type='rfft')
 
 
 def locate_source(X, r_rec, fs, nfft, algo_name, freq_range = [200., 1000.]):
-    r_rec_doa = r_rec/scale_fact
-    doa = pra.doa.algorithms[algo_name](r_rec_doa, fs, nfft=nfft, c=1500/scale_fact, mode='near')
+    r_rec_doa = r_rec
+    doa = pra.doa.algorithms[algo_name](r_rec_doa, fs, nfft=nfft, c=1500, mode='near')
     doa.locate_sources(X, freq_range=freq_range)
     return doa
 
