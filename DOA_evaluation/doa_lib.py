@@ -194,3 +194,7 @@ def plot_doa(doa, azimuth, algo_name):
     ax.set_ylim([0, 1.05 * (base + height)]);
 
     plt.show()
+
+def calc_doa(doa, algo_name):
+    """select the strongest angle between -90 and 90"""
+    return doa.grid.azimuth[np.argmax(doa.grid.values * ((doa.grid.azimuth <= np.pi/2.) | (doa.grid.azimuth >= 3.*np.pi/2.)))]
